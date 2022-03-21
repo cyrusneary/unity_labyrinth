@@ -11,6 +11,7 @@ public class agentController : Agent
     private float moveSpeed = 7f;
     private float distanceThreshold = 0.5f;
     private float velThreshold = 0.5f;
+    private float lavaReward = -10000f;
     [SerializeField] private Transform targetTransform;
     private Rigidbody rb;
     private float distanceToTarget;
@@ -21,9 +22,7 @@ public class agentController : Agent
     private Vector3 initLocation;
     private Vector3 targetLocation;
     private Vector3 subTaskTargetLocation;
-
     private Dictionary<int, (Vector3, Vector3)> taskDescriptions;
-
     private Dictionary<string, string> openWith = new Dictionary<string, string>();
 
     void Start()
@@ -84,8 +83,8 @@ public class agentController : Agent
     public override void OnEpisodeBegin()
     {
         // Get a random initial velocity
-        float vel_r = velThreshold * Random.Range(0f, 1f);
-        float vel_theta = 2f * Mathf.PI * Random.Range(0f, 1f);
+        float vel_r = velThreshold * UnityEngine.Random.Range(0f, 1f);
+        float vel_theta = 2f * Mathf.PI * UnityEngine.Random.Range(0f, 1f);
         float vel_x = vel_r * Mathf.Cos(vel_theta);
         float vel_z = vel_r * Mathf.Sin(vel_theta);
 
@@ -93,8 +92,8 @@ public class agentController : Agent
         rb.velocity = new Vector3(vel_x, 0, vel_z);
 
         // Get a random initial position centered around the initial location
-        float pos_r = distanceThreshold * Random.Range(0f, 1f);
-        float pos_theta = 2f * Mathf.PI * Random.Range(0f, 1f);
+        float pos_r = distanceThreshold * UnityEngine.Random.Range(0f, 1f);
+        float pos_theta = 2f * Mathf.PI * UnityEngine.Random.Range(0f, 1f);
         float pos_x = initLocation.x + pos_r * Mathf.Cos(pos_theta);
         float pos_z = initLocation.z + pos_r * Mathf.Sin(pos_theta);
 
@@ -143,7 +142,7 @@ public class agentController : Agent
 
     private void OnTriggerEnter(Collider other){
         if(other.gameObject.CompareTag("Lava")){
-            SetReward(-1f);
+            SetReward(lavaReward);
             sideChannel.SendStringToPython("Failed task");
             EndEpisode();
         }
