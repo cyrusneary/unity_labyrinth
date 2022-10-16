@@ -8,10 +8,13 @@ using Unity.MLAgents.Sensors;
 
 public class agentController : Agent
 {
-    private float moveSpeed = 7f;
+    private float moveSpeed = 3f;
     private float distanceThreshold = 0.5f;
     private float velThreshold = 0.5f;
-    private float lavaReward = -10000f;
+    private float initialStateDistBuffer = 0.15f;
+    private float initialStateVelBuffer = 0.15f;
+    private float lavaReward = -1f;
+    private float completedReward = 1f;
     [SerializeField] private Transform targetTransform;
     private Rigidbody rb;
     private float distanceToTarget;
@@ -25,6 +28,18 @@ public class agentController : Agent
     private Dictionary<int, (Vector3, Vector3)> taskDescriptions;
     private Dictionary<string, string> openWith = new Dictionary<string, string>();
 
+    [SerializeField] private Transform s0;
+    [SerializeField] private Transform s1;
+    [SerializeField] private Transform s2;
+    [SerializeField] private Transform s3;
+    [SerializeField] private Transform s4;
+    [SerializeField] private Transform s5;
+    [SerializeField] private Transform s6;
+    [SerializeField] private Transform s7;
+    [SerializeField] private Transform s8;
+    [SerializeField] private Transform s9; // Goal HLM state
+    [SerializeField] private Transform s10; // Initial HLM state
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -34,19 +49,33 @@ public class agentController : Agent
         // The value consists of two vectors. The first is the task's initial
         // location, the second is the task's target location.
         taskDescriptions = new Dictionary<int, (Vector3, Vector3)>();
-        taskDescriptions.Add(-1, (new Vector3(2f, 0.5f, -2f), new Vector3(1f, 0.5f, -19.5f)));
-        taskDescriptions.Add(0, (new Vector3(2f, 0.5f, -2f), new Vector3(4f, 0.5f, -6.5f)));
-        taskDescriptions.Add(1, (new Vector3(2f, 0.5f, -2f), new Vector3(6.5f, 0.5f, -3f)));
-        taskDescriptions.Add(2, (new Vector3(6.5f, 0.5f, -3f), new Vector3(10f, 0.5f, -6.5f)));
-        taskDescriptions.Add(3, (new Vector3(6.5f, 0.5f, -3f), new Vector3(16f, 0.5f, -6.5f)));
-        taskDescriptions.Add(4, (new Vector3(4f, 0.5f, -6.5f), new Vector3(6f, 0.5f, -12f)));
-        taskDescriptions.Add(5, (new Vector3(6f, 0.5f, -12f), new Vector3(4f, 0.5f, -16.5f)));
-        taskDescriptions.Add(6, (new Vector3(10f, 0.5f, -6.5f), new Vector3(12f, 0.5f, -15f)));
-        taskDescriptions.Add(7, (new Vector3(12f, 0.5f, -15f), new Vector3(10f, 0.5f, -6.5f)));
-        taskDescriptions.Add(8, (new Vector3(16f, 0.5f, -6.5f), new Vector3(17f, 0.5f, -16.5f)));
-        taskDescriptions.Add(9, (new Vector3(4f, 0.5f, -16.5f), new Vector3(1f, 0.5f, -19f)));
-        taskDescriptions.Add(10, (new Vector3(17f, 0.5f, -16.5f), new Vector3(10f, 0.5f, -18.5f)));
-        taskDescriptions.Add(11, (new Vector3(10f, 0.5f, -18.5f), new Vector3(1f, 0.5f, -19.5f)));
+        taskDescriptions.Add(-1, (s10.position, s9.position));
+        taskDescriptions.Add(0, (s10.position, s0.position));
+        taskDescriptions.Add(1, (s10.position, s1.position));
+        taskDescriptions.Add(2, (s1.position, s2.position));
+        taskDescriptions.Add(3, (s1.position, s3.position));
+        taskDescriptions.Add(4, (s0.position, s4.position));
+        taskDescriptions.Add(5, (s4.position, s5.position));
+        taskDescriptions.Add(6, (s2.position, s6.position));
+        taskDescriptions.Add(7, (s6.position, s2.position));
+        taskDescriptions.Add(8, (s3.position, s7.position));
+        taskDescriptions.Add(9, (s5.position, s9.position));
+        taskDescriptions.Add(10, (s7.position, s8.position));
+        taskDescriptions.Add(11, (s8.position, s9.position));
+
+        // taskDescriptions.Add(-1, (new Vector3(2f, 0.5f, -2f), new Vector3(1f, 0.5f, -19.5f)));
+        // taskDescriptions.Add(0, (new Vector3(2f, 0.5f, -2f), new Vector3(4f, 0.5f, -6.5f)));
+        // taskDescriptions.Add(1, (new Vector3(2f, 0.5f, -2f), new Vector3(6.5f, 0.5f, -3f)));
+        // taskDescriptions.Add(2, (new Vector3(6.5f, 0.5f, -3f), new Vector3(10f, 0.5f, -6.5f)));
+        // taskDescriptions.Add(3, (new Vector3(6.5f, 0.5f, -3f), new Vector3(16f, 0.5f, -6.5f)));
+        // taskDescriptions.Add(4, (new Vector3(4f, 0.5f, -6.5f), new Vector3(6f, 0.5f, -12f)));
+        // taskDescriptions.Add(5, (new Vector3(6f, 0.5f, -12f), new Vector3(4f, 0.5f, -16.5f)));
+        // taskDescriptions.Add(6, (new Vector3(10f, 0.5f, -6.5f), new Vector3(12.5f, 0.5f, -15.5f)));
+        // taskDescriptions.Add(7, (new Vector3(12.5f, 0.5f, -15.5f), new Vector3(10f, 0.5f, -6.5f)));
+        // taskDescriptions.Add(8, (new Vector3(16f, 0.5f, -6.5f), new Vector3(17f, 0.5f, -16.5f)));
+        // taskDescriptions.Add(9, (new Vector3(4f, 0.5f, -16.5f), new Vector3(1f, 0.5f, -19f)));
+        // taskDescriptions.Add(10, (new Vector3(17f, 0.5f, -16.5f), new Vector3(10f, 0.5f, -18.5f)));
+        // taskDescriptions.Add(11, (new Vector3(10f, 0.5f, -18.5f), new Vector3(1f, 0.5f, -19.5f)));
 
         // Set the current task to the value representing the overall task
         currentTask = -1;
@@ -83,7 +112,7 @@ public class agentController : Agent
     public override void OnEpisodeBegin()
     {
         // Get a random initial velocity
-        float vel_r = velThreshold * UnityEngine.Random.Range(0f, 1f);
+        float vel_r = (velThreshold + initialStateVelBuffer) * UnityEngine.Random.Range(0f, 1f);
         float vel_theta = 2f * Mathf.PI * UnityEngine.Random.Range(0f, 1f);
         float vel_x = vel_r * Mathf.Cos(vel_theta);
         float vel_z = vel_r * Mathf.Sin(vel_theta);
@@ -92,7 +121,7 @@ public class agentController : Agent
         rb.velocity = new Vector3(vel_x, 0, vel_z);
 
         // Get a random initial position centered around the initial location
-        float pos_r = distanceThreshold * UnityEngine.Random.Range(0f, 1f);
+        float pos_r = (distanceThreshold + initialStateDistBuffer) * UnityEngine.Random.Range(0f, 1f);
         float pos_theta = 2f * Mathf.PI * UnityEngine.Random.Range(0f, 1f);
         float pos_x = initLocation.x + pos_r * Mathf.Cos(pos_theta);
         float pos_z = initLocation.z + pos_r * Mathf.Sin(pos_theta);
@@ -117,13 +146,13 @@ public class agentController : Agent
 
         distanceToTarget = 
             Vector3.Distance(this.transform.position, targetTransform.position);
-        AddReward(-distanceToTarget);
+        AddReward(-distanceToTarget / 10000);
 
         distanceToSubTaskTarget = 
             Vector3.Distance(this.transform.position, subTaskTargetLocation);
 
         // Compute current speed.
-        float vel = Mathf.Sqrt((rb.velocity.x * rb.velocity.x) + (rb.velocity.y * rb.velocity.y));
+        float vel = Mathf.Sqrt((rb.velocity.x * rb.velocity.x) + (rb.velocity.z * rb.velocity.z));
 
         if((distanceToSubTaskTarget <= distanceThreshold) && (vel <= velThreshold)) 
         {
@@ -132,7 +161,7 @@ public class agentController : Agent
 
         if((distanceToTarget <= distanceThreshold) && (vel <= velThreshold))
         {
-            SetReward(100f);
+            SetReward(completedReward);
             sideChannel.SendStringToPython("Completed task");
             EndEpisode();
         }
