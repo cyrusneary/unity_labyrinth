@@ -1,5 +1,5 @@
 # unity_labyrinty
-Unity ML-Agents project that acts as a labyrinth environment for reinforcement learning navigationt asks. This repository contains the Unity project files necessary to construct the environment. Python code that interacts with this environment and trains compositional reinforcement learning systems may be found at the following [github repository](https://github.com/cyrusneary/verifiable-compositional-rl).
+Unity ML-Agents project that acts as a labyrinth environment for compositional reinforcement learning algorithms. This repository contains the Unity project files necessary to construct the environment. Python code that interacts with this environment and trains compositional reinforcement learning systems may be found at the following [github repository](https://github.com/cyrusneary/verifiable-compositional-rl).
 
 ## Installation
 - Begin by installing the Unity Hub. Here is the [download link](https://unity.com/download#how-get-started).
